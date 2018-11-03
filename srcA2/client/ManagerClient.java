@@ -1,7 +1,7 @@
 package client;
 
 import RMIInterface.CenterServer;
-import Records.ProjectInfo;
+
 import Utils.Config;
 import org.omg.CosNaming.*;
 import org.omg.CosNaming.NamingContextPackage.*;
@@ -38,7 +38,7 @@ public class ManagerClient  {
 	private static String newValue;
 	private static String mailID;
 	private static String ProjectID ="";
-	private static String projectInfo =null;
+	private static ProjectInfo projectInfo =null;
 	private static int option;
 	private static Scanner scanner = new Scanner(System.in);
 	//private static Config.Server_ID serverID;
@@ -180,8 +180,8 @@ public class ManagerClient  {
 		}
 	}
 	public void createMRecord(DEMS demsServer) {
-		String ClientName;
-		String ProjectName;
+		String ClientName="";
+		String ProjectName="";
 	
 		boolean validateEmployeeId=false;
 		boolean validProjectID=false;
@@ -209,7 +209,7 @@ public class ManagerClient  {
 		System.out.println("Enter the Email");
 		mailID = scanner.next();
 
-		projectInfo = "";
+		projectInfo = new ProjectInfo(ProjectID, ClientName, ProjectName);
 		System.out.println("Enter Project ID, Client Name , Project Name");
 
 		validProjectID = false;
@@ -217,7 +217,7 @@ public class ManagerClient  {
 			ProjectID = scanner.next();
 			if( ProjectID.substring(0,1).equalsIgnoreCase("P")) {
 				validProjectID=true;
-				projectInfo += (ProjectID)+ ", ";
+				projectInfo.setProjectId(ProjectID);
 				break;
 			}
 			else{
@@ -227,10 +227,10 @@ public class ManagerClient  {
 		}
 		scanner.nextLine();
 		ClientName = scanner.nextLine() ;
-		projectInfo += (ClientName) + ",";
+		projectInfo.setClientName(ClientName);
 		ProjectName = scanner.nextLine() ;
-		projectInfo += (ProjectName);
-		//ProjectInfo pInfo = new ProjectInfo(ProjectID,ClientName,ProjectName);
+		projectInfo.setProjectName(ProjectName);
+		
 		//Validating Location
 		boolean validateLocation=false;
 		while(!validateLocation){
@@ -251,9 +251,10 @@ public class ManagerClient  {
 		
 		//Print to Manager_ServerID
 		if (recordID != null) {
+			String ProjectInfoString = "[ " +projectInfo.getProjectId() +" , " +projectInfo.getClientName()+ " , " + projectInfo.getProjectName() + " ]";
 			System.out.println("Manager record created Successfully");
 			LOGGER.info("Manager Record created Succesffully by Manager: " +
-					String.format(Config.LOG_ADD_MANAGER_RECORD,managerID, recordID, FirstName, LastName, employeeID, mailID, projectInfo, Location)	);
+					String.format(Config.LOG_ADD_MANAGER_RECORD,managerID, recordID, FirstName, LastName, employeeID, mailID, ProjectInfoString, Location)	);
 
 		} else {
 			System.out.println("Manager Record not created");

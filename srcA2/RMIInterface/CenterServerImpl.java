@@ -7,6 +7,7 @@ import org.omg.CORBA.DEMS;
 import org.omg.CORBA.DEMSHelper;
 import org.omg.CORBA.DEMSPOA;
 import org.omg.CORBA.ORB;
+import org.omg.CORBA.ProjectInfo;
 import org.omg.CosNaming.*;
 import org.omg.CosNaming.NamingContextPackage.*;
 import org.omg.PortableServer.*;
@@ -117,7 +118,7 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 	}
 
 	public String createMRecord(String managerID, String firstname, String lastname, String employeeID, String emailID,
-			String projectInfo, String location)  {
+			ProjectInfo projectInfo, String location)  {
 
 		String newRecordID;
 		synchronized (lockID) {
@@ -128,7 +129,8 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 		// Create new record
 		Manager newRecord = new Manager(newRecordID, firstname, lastname, employeeID, emailID, projectInfo, location);
 		insertRecord(newRecord);
-		LOGGER.info(String.format(Config.LOG_ADD_MANAGER_RECORD,managerID,newRecordID, firstname, lastname, employeeID, emailID, projectInfo, location));
+		String PinfoString = "[ " + projectInfo.getProjectId() + " , " +  projectInfo.getClientName() + " , " +  projectInfo.getProjectName() + " ]";
+		LOGGER.info(String.format(Config.LOG_ADD_MANAGER_RECORD,managerID,newRecordID, firstname, lastname, employeeID, emailID, PinfoString, location));
 
 		return newRecordID;
 
@@ -210,37 +212,6 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 		return result_value;
 	}
 
-	/*private String[] send_and_receive_packets(int port1, int port2)        //invoked server sends the count request to other two servers and recieve their reply
-	{
-		String result[] = {"", ""};
-		try {
-
-			InetAddress host = InetAddress.getLocalHost();
-			byte_array_request = "count".getBytes();
-			datagramSocket = new DatagramSocket();
-			sendRequestpacket1 = new DatagramPacket(byte_array_request, byte_array_request.length, host, port1);//first packet is sent to first serve(port no1)
-			this.datagramSocket.send(sendRequestpacket1);
-
-
-			receivedReplyPacket1 = new DatagramPacket(byte_array_reply, byte_array_reply.length);
-			this.datagramSocket.receive(receivedReplyPacket1);
-
-			datagramSocket = new DatagramSocket();
-			sendRequestpacket2 = new DatagramPacket(byte_array_request, byte_array_request.length, host, port2);
-			datagramSocket.send(sendRequestpacket2);
-
-			receivedReplyPacket2 = new DatagramPacket(byte_array_reply, byte_array_reply.length);
-			this.datagramSocket.receive(receivedReplyPacket2);
-
-			result[0] = new String(receivedReplyPacket1.getData()).trim();
-			result[1] = new String(receivedReplyPacket2.getData()).trim();
-		} catch (Exception e) {
-
-		}
-
-		return result;
-	}*/
-
 	public boolean editRecord(String managerID, String recordID, String fieldName, String newValue) {
 		boolean editStatus = false;
 		Record recordFound = locateRecord(recordID);
@@ -258,7 +229,13 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 
 					} else if(fieldName.equalsIgnoreCase("projectInfo")) {
 						String[] myList = newValue.split(",");
-						managerRecord.setProjectInfo(myList[0] + ", " + myList[1] + ", "+ myList[2]);                    		
+						ProjectInfo pInfo = managerRecord.getProjectInfo();
+						pInfo.setProjectId(myList[0]);
+						pInfo.setClientName(myList[1]);
+						pInfo.setProjectName(myList[2]);
+						
+						managerRecord.setProjectInfo(pInfo);
+						
 						editStatus=true;
 
 					} else if(fieldName.equalsIgnoreCase("Location")) {
@@ -282,10 +259,12 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 						System.out.println("Opps !!, Cannot edit any other fields except for MailID , ProjectInfo, Location");
 						editStatus=false;
 					}
-					if(editStatus == true)
-						LOGGER.info("Edited " + fieldName + " Succesffully by : " +
-								String.format(Config.LOG_NEW_MANAGER_MODIFIED_RECORD, managerID, recordID, managerRecord.getFirstname(), managerRecord.getLastname(), managerRecord.getEmployeeID(), managerRecord.getEmailID(), managerRecord.getProjectInfo(), managerRecord.getLocation()));
+					if(editStatus == true) {
+						String ProjectInfoString = "[ " +managerRecord.getProjectInfo().getProjectId() +" , " +managerRecord.getProjectInfo().getClientName()+ " , " + managerRecord.getProjectInfo().getProjectName() + " ]";
 
+						LOGGER.info("Edited " + fieldName + " Succesffully by : " +
+								String.format(Config.LOG_NEW_MANAGER_MODIFIED_RECORD, managerID, recordID, managerRecord.getFirstname(), managerRecord.getLastname(), managerRecord.getEmployeeID(), managerRecord.getEmailID(), ProjectInfoString, managerRecord.getLocation()));
+					}
 
 
 				} else if (recordFound.getRecordType().equals(Record.Record_Type.EMPLOYEE))  { 
@@ -329,11 +308,12 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 					}
 					else if((recordsList.get(i)).getRecordType()==Records.Record.Record_Type.MANAGER){
 						Manager manvalues = (Manager) recordsList.get(i);
+						String ProjectInfoString = "[ " +manvalues.getProjectInfo().getProjectId() +" , " +manvalues.getProjectInfo().getClientName()+ " , " + manvalues.getProjectInfo().getProjectName() + " ]";
 						output = "First Name is : "+ manvalues.getFirstname()+"\n" + 
 								"Last Name is : "+ manvalues.getLastname()+"\n" + 
 								"Employee ID is : "+ manvalues.getEmployeeID()+"\n" + 
 								"Email is : "+ manvalues.getEmailID()+"\n" + 
-								"Project Info is : "+ manvalues.getProjectInfo()+"\n" + 
+								"Project Info is : "+ ProjectInfoString +"\n" + 
 								"Location is  : " + manvalues.getLocation();
 					}
 					else{
@@ -375,7 +355,8 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 
 								if (recordFound.getRecordType() == Record.Record_Type.MANAGER) {
 									Manager managerRecord = (Manager) recordFound;
-									requestContent += "Transfer-Manager-Record"+ ","+  managerID+ "," + managerRecord.getRecordID()+ "," +managerRecord.getFirstname()+ "," +managerRecord.getLastname()+ "," + managerRecord.getEmployeeID()+ "," +managerRecord.getEmailID()+ "," +managerRecord.getProjectInfo()+ "," +managerRecord.getLocation();
+									String PInfoString = managerRecord.getProjectInfo().getProjectId() + "_" + managerRecord.getProjectInfo().getClientName() + "_" + managerRecord.getProjectInfo().getProjectName() ;
+									requestContent += "Transfer-Manager-Record"+ ","+  managerID+ "," + managerRecord.getRecordID()+ "," +managerRecord.getFirstname()+ "," +managerRecord.getLastname()+ "," + managerRecord.getEmployeeID()+ "," +managerRecord.getEmailID()+ "," + PInfoString + "," +managerRecord.getLocation();
 									//result= transferMRecord(remoteCenterServerName, managerID, managerRecord.getRecordID() ,managerRecord.getFirstname(), managerRecord.getLastname(), managerRecord.getEmployeeID(), managerRecord.getEmailID(), managerRecord.getProjectInfo(),  managerRecord.getLocation());
 									LOGGER.info("TRANSFERRING MANAGER RECORD " + recordID + " INTO SERVER " + remoteCenterServerName);
 								} else {
@@ -440,13 +421,14 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 		}
 	}
 
-	private String transferMRecord(String ServerToTransfer, String managerID, String recordID, String firstName, String lastName, String employeeID, String email, String projectInfo, String location) {
+	private String transferMRecord(String ServerToTransfer, String managerID, String recordID, String firstName, String lastName, String employeeID, String email, ProjectInfo projectInfo, String location) {
 
 		// Create new record
 		Manager newRecord = new Manager(recordID, firstName, lastName, employeeID, email, projectInfo, location);
 		insertRecord(newRecord);
 		System.out.println("Adding Record to " +  ServerToTransfer );
-		LOGGER.info(String.format(Config.TRANSFER_MANAGER_RECORD, ServerToTransfer, managerID, recordID, firstName, lastName, employeeID, email, projectInfo, location));
+		String ProjectInfoString = "[ " +projectInfo.getProjectId() +" , " +projectInfo.getClientName()+ " , " + projectInfo.getProjectName() + " ]";
+		LOGGER.info(String.format(Config.TRANSFER_MANAGER_RECORD, ServerToTransfer, managerID, recordID, firstName, lastName, employeeID, email, ProjectInfoString, location));
 		return recordID;
 	}
 
@@ -550,13 +532,20 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 
 					}else {
 						System.out.println("Record is an Manager Record");//if record id is a manager record
-						String PInfo = fields[7];
+						
+						ProjectInfo PInfo = new ProjectInfo() ;
+					
+						String[] pInfoString	= fields[7].split("_");
+						PInfo.setProjectId(pInfoString[0]);
+						PInfo.setClientName(pInfoString[1]);
+						PInfo.setProjectName(pInfoString[2]);
+						System.out.println("Transferred: " + PInfo.getProjectId() + ", "+ PInfo.getClientName()+ ", " + PInfo.getProjectName());
 						String Location = fields[8];
 						
 						new Thread(new Runnable() {
 							public void run() {
 								System.out.println("Transfering the record");
-								transferMRecord(serverID.toString(),managerID,recordID, fname, lname,EID,Mail, PInfo, Location);
+								transferMRecord(serverID.toString(),managerID,recordID, fname, lname,EID,Mail, PInfo , Location);
 								System.out.println("Record Transfered");
 							}
 						}).start();
@@ -564,9 +553,7 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 					bufferSend =  data.toString().getBytes();
 					DatagramPacket sendPackets=new DatagramPacket(bufferSend,bufferSend.length,receivePacket.getAddress(),receivePacket.getPort());
 					socket.send(sendPackets);
-					System.out.println("Herro Is it over????");
 				}
-				System.out.println("Hello????");
 			}
 		}catch(SocketException e){
 			System.out.println("Socket "+e.getMessage());
@@ -575,7 +562,6 @@ public class CenterServerImpl extends DEMSPOA implements Runnable{
 			System.out.println("IO :"+e.getMessage());
 			e.printStackTrace();
 		}
-		System.out.println("Duhhhh Herroo");
 
 	}
 

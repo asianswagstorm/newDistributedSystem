@@ -2,16 +2,18 @@ package Records;
 
 import java.util.ArrayList;
 
+import org.omg.CORBA.ProjectInfo;
+
 public class Manager extends Record {
     public enum Mutable_Fields {employeeID, emailID, location}
 	private String firstname;
 	private String lastname;
 	private String employeeID;
 	private String emailID;
-	private String projectInfo; 
+	private ProjectInfo projectInfo; 
 	private String location;
 	
-	public Manager(String recordID, String firstname, String lastname,String employeeID ,String emailID ,String projectInfo ,String location) {
+	public Manager(String recordID, String firstname, String lastname,String employeeID ,String emailID ,ProjectInfo projectInfo ,String location) {
 		    super(recordID, firstname, lastname, Record_Type.MANAGER);
 			this.firstname = firstname;
 			this.lastname = lastname;
@@ -53,11 +55,11 @@ public class Manager extends Record {
 		this.emailID = emailID;
 	}
 
-	public String getProjectInfo() {
+	public ProjectInfo getProjectInfo() {
 		return projectInfo;
 	}
 
-	public void setProjectInfo(String projectInfo) {
+	public void setProjectInfo(ProjectInfo projectInfo) {
 		this.projectInfo = projectInfo;
 	}
 

@@ -5,9 +5,11 @@ import java.rmi.RemoteException;
 import java.rmi.server.ServerNotActiveException;
 import java.util.ArrayList;
 
+import org.omg.CORBA.ProjectInfo;
+
 public interface CenterServer extends Remote{
 	
-	public String createMRecord(String firstname, String lastname,String employeeID ,String emailID ,String projectInfo ,String location) throws RemoteException, ServerNotActiveException;
+	public String createMRecord(String firstname, String lastname,String employeeID ,String emailID ,ProjectInfo projectInfo ,String location) throws RemoteException, ServerNotActiveException;
 	public String createERecord(String firstname, String lastname,String employeeID ,String emailID, String projectID) throws RemoteException, ServerNotActiveException;
 	public String getRecordCounts() throws RemoteException;
 	public boolean editRecord(String recordID,String fieldName,String newValue) throws RemoteException;
