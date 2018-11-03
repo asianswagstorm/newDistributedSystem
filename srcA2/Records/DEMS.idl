@@ -1,0 +1,11 @@
+module CORBA {
+    interface DEMS {
+        string createMRecord(in string managerID, in string firstName, in string lastName, in string employeeID, in string emailID, in string projectInfo, in string location);
+        string createERecord(in string managerID, in string firstName, in string lastName, in string employeeID, in string emailID, in string projectID );
+        string getRecordCounts(in string managerID);
+        boolean editRecord(in string managerID, in string recordID, in string fieldName, in string newValue);
+        boolean transferRecord(in string managerID, in string recordID, in string remoteCenterServerName);
+	string printData();
+        string printRecord(in string managerID, in string recordID);
+    };
+};
