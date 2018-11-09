@@ -22,7 +22,7 @@ public class USCenterServerImplServiceLocator extends org.apache.axis.client.Ser
     }
 
     // Use to get a proxy class for CenterServerImpl
-    private java.lang.String CenterServerImpl_address = "http://localhost:8888/US?wsdl";
+    private java.lang.String CenterServerImpl_address = "http://localhost:8888/CenterServerImpl/US?wsdl";
 
     public java.lang.String getCenterServerImplAddress() {
         return CenterServerImpl_address;
